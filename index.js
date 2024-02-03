@@ -5,13 +5,26 @@ const fs = require("fs");
 const { baseRequest } = require("./baseRequest");
 
 const promptSamples = {
-  person: "a man drinking coffee at a kitchen table in the morning",
-  place: "a street level view of New York City at night",
-  thing: "a red car parked on the side of the road",
+  dragon: "a dragon",
+  trump: "donald trump wearing a top hat",
+  skyscraper: "people releasing Chinese lanterns into the sky from skyscrapers",
+  Godzilla: "Godzilla",
+  zodiac: "Chinese zodiac",
+  cherrytree: "a blossoming cherry tree",
+  catgirl: "a cute catgirl wearing a qipao",
+  Pooh: "Xi Jinping cosplaying as Winnie the Pooh",
+  garden: "a beautiful garden, cherry trees, lotus flowers, chrysanthemums",
+  noodles: "a bowl of noodles"
 };
+
+const htmlfile = "cny.html"
+const mdfile   = "cny.md"
+const jsonfile = "cny.json"
 
 var models = {};
 var styles = {};
+
+const css="td { vertical-align: middle; }\ntd { min-width: 128px; }";
 
 const main = async () => {
   console.log(
@@ -27,10 +40,10 @@ const main = async () => {
   }
 
   models = await getJSON(
-    "https://raw.githubusercontent.com/Haidra-Org/AI-Horde-image-model-reference/main/stable_diffusion.json"
+    "stable_diffusion.json"
   );
   styles = await getJSON(
-    "https://raw.githubusercontent.com/Haidra-Org/AI-Horde-Styles/main/styles.json"
+    "styles.json"
   );
 
   var generationStatus = {};
@@ -56,43 +69,48 @@ const main = async () => {
   // write previews.md and previews.json files
   generateFlatFiles(generationStatus);
 
-  console.log("I am finished!");
+  console.log("I am finished! I have come to wonder in this time:\n- How does the throne of blood support me?\n- How does a castle stay stable on a mountain of thrones?\n- How do you build a castle out of pain?");
 };
 
 function generateFlatFiles(generationStatus) {
-  fs.writeFileSync("previews.md", "# Style Previews\n\n");
+  fs.writeFileSync(mdfile, "# Style Previews\n\n| style ");
+  fs.writeFileSync(htmlfile, `<style>\n${css}\n</style>\n<h1>Style Previews</h1>\n<table>\n  <thead><tr>\n    <td>style</td>`);
   const previews = {};
+
+  for (const promptType of Object.keys(promptSamples)) {
+    fs.appendFileSync(mdfile, `| ${promptType} `);
+    fs.appendFileSync(htmlfile, `\n    <td>${promptType}</td>`);
+  }
+  fs.appendFileSync(mdfile, "|\n");
+  fs.appendFileSync(htmlfile, "\n  </tr></thead>\n  <tbody>");
+  for (let i = 0; i < Object.keys(promptSamples).length + 1; i++) {
+    fs.appendFileSync(mdfile, `| --- `);
+  }
+  fs.appendFileSync(mdfile, "|\n");
+
   for (const [styleName, promptStatus] of Object.entries(generationStatus)) {
     const safeStyleName = styleName.replace(/[^a-z0-9]/gi, "_").toLowerCase();
     previews[styleName] = {};
 
-    fs.appendFileSync("previews.md", `## ${styleName}\n`);
+    fs.appendFileSync(mdfile, `| ${styleName} `);
+    fs.appendFileSync(htmlfile, `\n    <tr>\n      <td>${styleName}</td>`);
     // create table heading for all the prompt types
-    for (const promptType of Object.keys(promptStatus)) {
-      fs.appendFileSync("previews.md", `| ${promptType} `);
-    }
-    fs.appendFileSync("previews.md", "|\n");
-    for (let i = 0; i < Object.keys(promptStatus).length; i++) {
-      fs.appendFileSync("previews.md", `| --- `);
-    }
-    fs.appendFileSync("previews.md", "|\n");
 
     for (const [promptType, status] of Object.entries(promptStatus)) {
       if (status) {
-        fs.appendFileSync(
-          "previews.md",
-          `| ![${styleName} ${promptType} preview](/images/${safeStyleName}_${promptType}.webp?raw=true) `
-        );
-        previews[styleName][
-          promptType
-        ] = `${config.cdn_url_prefix}/${safeStyleName}_${promptType}.webp`;
+        fs.appendFileSync(mdfile,`| ![${styleName} ${promptType} preview](/images/${safeStyleName}_${promptType}.webp?raw=true) `);
+        fs.appendFileSync(htmlfile,`\n      <td><img src="${config.cdn_url_prefix}/${safeStyleName}_${promptType}.webp" alt="${styleName}"></td>`);
+        previews[styleName][promptType] = `${config.cdn_url_prefix}/${safeStyleName}_${promptType}.webp`;
       } else {
-        fs.appendFileSync("previews.md", `| ❌ `);
+        fs.appendFileSync(mdfile, `| ❌ `);
+        fs.appendFileSync(htmlfile, `\n      <td>❌</td>`);
       }
     }
-    fs.appendFileSync("previews.md", "|\n\n");
+    fs.appendFileSync(mdfile, "|\n");
+    fs.appendFileSync(htmlfile, "\n    </tr>");
   }
-  fs.writeFileSync("previews.json", JSON.stringify(previews, null, 2));
+  fs.appendFileSync(htmlfile, "\n  </tbody>\n</table>");
+  fs.writeFileSync(jsonfile, JSON.stringify(previews, null, 2));
 }
 
 async function generateImageForStyleAndPrompt(
@@ -226,8 +244,9 @@ async function generateImages(request) {
 
 async function getJSON(url) {
   try {
-    const response = await fetch(url);
-    return await response.json();
+//    const response = await fetch(url);
+//    return await response.json();
+    return JSON.parse(fs.readFileSync(url));
   } catch (error) {
     console.log(error);
     return {};
