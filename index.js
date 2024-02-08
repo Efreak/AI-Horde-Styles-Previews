@@ -14,7 +14,9 @@ const promptSamples = {
   catgirl: "a cute catgirl wearing a qipao",
   Pooh: "Xi Jinping cosplaying as Winnie the Pooh",
   garden: "a beautiful garden, cherry trees, lotus flowers, chrysanthemums",
-  noodles: "a bowl of noodles"
+  noodles: "a bowl of noodles",
+  landscape: "a beautiful landscape",
+  booperman: "batman wearing superman costume"
 };
 
 const htmlfile = "cny.html"
